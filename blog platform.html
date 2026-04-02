@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Blog Platform</title>
+
+<style>
+body {
+    font-family: 'Segoe UI';
+    margin: 0;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    color: #333;
+}
+
+header {
+    background: url('https://images.unsplash.com/photo-1499750310107-5fef28a66643') center/cover;
+    color: white;
+    text-align: center;
+    padding: 40px;
+}
+
+header h2 {
+    background: rgba(0,0,0,0.5);
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 10px;
+}
+
+.container {
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #5a67d8;
+}
+
+.post img {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.comment {
+    background: #f1f1f1;
+    padding: 5px;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+</style>
+
+</head>
+
+<body>
+
+<header>
+    <h2>My Blog Platform ✍️</h2>
+</header>
+
+<div class="container">
+
+<div id="auth" class="card">
+    <h3>Login / Register</h3>
+    <input id="username" placeholder="Username">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+</div>
+
+<div id="blog" style="display:none;">
+
+<div class="card">
+    <h3>Create Post</h3>
+    <input id="title" placeholder="Title">
+    <textarea id="content" placeholder="Write something..."></textarea>
+    <button onclick="addPost()">Post</button>
+</div>
+
+<h3 style="color:white;">All Posts</h3>
+<div id="posts"></div>
+
+</div>
+
+</div>
+
+<script>
+let users = JSON.parse(localStorage.getItem("users")) || [];
+let posts = JSON.parse(localStorage.getItem("posts")) || [];
+let currentUser = localStorage.getItem("currentUser");
+
+if(currentUser){
+    document.getElementById("auth").style.display = "none";
+    document.getElementById("blog").style.display = "block";
+    showPosts();
+}
+
+function register(){
+    let u = username.value;
+    let p = password.value;
+
+    if(!u || !p) return alert("Fill all fields");
+
+    if(users.find(x => x.username === u)){
+        return alert("User exists");
+    }
+
+    users.push({username: u, password: p});
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Registered!");
+}
+
+function login(){
+    let u = username.value;
+    let p = password.value;
+
+    let user = users.find(x => x.username === u && x.password === p);
+    if(!user) return alert("Invalid");
+
+    localStorage.setItem("currentUser", u);
+    location.reload();
+}
+
+function addPost(){
+    let titleVal = title.value;
+    let contentVal = content.value;
+
+    if(!titleVal || !contentVal) return;
+
+    let images = [
+        "https://images.unsplash.com/photo-1501504905252-473c47e087f8",
+        "https://images.unsplash.com/photo-1519389950473-47ba0277781c",
+        "https://images.unsplash.com/photo-1492724441997-5dc865305da7"
+    ];
+
+    let randomImg = images[Math.floor(Math.random() * images.length)];
+
+    posts.push({
+        id: Date.now(),
+        title: titleVal,
+        content: contentVal,
+        author: currentUser,
+        image: randomImg,
+        comments: []
+    });
+
+    localStorage.setItem("posts", JSON.stringify(posts));
+    title.value = "";
+    content.value = "";
+    showPosts();
+}
+
+function showPosts(){
+    let container = document.getElementById("posts");
+    container.innerHTML = "";
+
+    posts.forEach(p => {
+        let div = document.createElement("div");
+        div.className = "card post";
+
+        div.innerHTML = `
+            <img src="${p.image}">
+            <h4>${p.title}</h4>
+            <p>${p.content}</p>
+            <small>By ${p.author}</small><br>
+
+            ${p.author === currentUser ? `
+            <button onclick="deletePost(${p.id})">Delete</button>
+            ` : ""}
+
+            <input placeholder="Add comment" id="c${p.id}">
+            <button onclick="addComment(${p.id})">Comment</button>
+
+            <div>
+                ${p.comments.map(c => `<div class="comment">${c}</div>`).join("")}
+            </div>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+function deletePost(id){
+    posts = posts.filter(p => p.id !== id);
+    localStorage.setItem("posts", JSON.stringify(posts));
+    showPosts();
+}
+
+function addComment(id){
+    let input = document.getElementById("c"+id);
+    let text = input.value;
+
+    if(!text) return;
+
+    let post = posts.find(p => p.id === id);
+    post.comments.push(currentUser + ": " + text);
+
+    localStorage.setItem("posts", JSON.stringify(posts));
+    showPosts();
+}
+</script>
+
+</body>
+</html>
